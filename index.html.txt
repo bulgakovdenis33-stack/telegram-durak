@@ -1,0 +1,271 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Дурак: Подворотня</title>
+
+    <!-- Telegram Mini App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: radial-gradient(circle at top, #26221d, #0f0d0a);
+            color: #d1c7b0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 18px 16px 8px;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 14px;
+            border-radius: 2px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .main {
+            width: 100%;
+            max-width: 700px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #e0d6c0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .subtitle {
+            color: #8a8172;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .cards {
+            min-height: 130px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin: 24px 0;
+        }
+
+        /* === ОБНОВЛЕННЫЙ СТИЛЬ КАРТ === */
+        .card {
+            width: 74px;
+            height: 106px;
+            border-radius: 2px;
+            border: 1px solid #a89d82;
+            color: #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 900;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+            /* Многослойный фон для эффекта старения */
+            background-image: 
+                /* Залом 1: диагональная складка */
+                linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.4) 42%, rgba(0,0,0,0.1) 44%, transparent 46%),
+                /* Залом 2: другая диагональ */
+                linear-gradient(45deg, transparent 60%, rgba(0,0,0,0.15) 62%, rgba(255,255,255,0.3) 64%, transparent 66%),
+                /* Пятна грязи и потертости */
+                radial-gradient(circle at 20% 80%, rgba(0,0,0,0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.25) 0%, transparent 50%),
+                /* Базовый цвет старой бумаги */
+                linear-gradient(to bottom, #e6dcc3, #cfc2a3);
+        }
+
+        /* Эффект загнутго угла */
+        .card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 0 12px 12px;
+            border-color: transparent transparent #b0a48a transparent;
+            box-shadow: -2px -2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Текст карты должен быть поверх эффектов */
+        .card span {
+            position: relative;
+            z-index: 2;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.3); /* Легкий рельеф */
+        }
+
+        .red {
+            color: #7a1f1f;
+        }
+
+        .button {
+            width: 100%;
+            max-width: 360px;
+            border: none;
+            border-radius: 2px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #e0d6c0;
+            background: #3d362d;
+            border: 1px solid #221e19;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 0 #1a1612;
+        }
+
+        .button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #1a1612;
+        }
+
+        .status {
+            margin-top: 16px;
+            min-height: 24px;
+            color: #9db1d2;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="badge" id="player">Игрок: Местный</div>
+        <div class="badge" id="balance">Фарт: 100</div>
+    </div>
+
+    <div class="main">
+        <h1>Дурак</h1>
+        <div class="subtitle">Подворотня</div>
+
+        <div class="cards" id="cards"></div>
+
+        <button class="button" id="dealButton">Тасуй</button>
+
+        <div class="status" id="status">
+            Карты на руках. Фарту.
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram?.WebApp;
+
+        if (tg) {
+            tg.ready();
+            tg.expand();
+
+            if (tg.disableVerticalSwipes) {
+                tg.disableVerticalSwipes();
+            }
+        }
+
+        const user = tg?.initDataUnsafe?.user;
+
+        if (user && user.first_name) {
+            document.getElementById("player").textContent =
+                "Игрок: " + user.first_name;
+        }
+
+        let balance = 100;
+
+        const balanceElement = document.getElementById("balance");
+        const cardsElement = document.getElementById("cards");
+        const statusElement = document.getElementById("status");
+
+        function renderBalance() {
+            balanceElement.textContent = "Фарт: " + balance;
+        }
+
+        const suits = ["♠", "♥", "♦", "♣"];
+        const ranks = ["6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+
+        function getRandomCard() {
+            const suit = suits[Math.floor(Math.random() * suits.length)];
+            const rank = ranks[Math.floor(Math.random() * ranks.length)];
+
+            return { suit, rank };
+        }
+
+        function createCardElement(card) {
+            const cardDiv = document.createElement("div");
+            cardDiv.className = "card";
+
+            if (card.suit === "♥" || card.suit === "♦") {
+                cardDiv.classList.add("red");
+            }
+
+            // Оборачиваем текст в span, чтобы он был поверх заломов
+            const span = document.createElement("span");
+            span.textContent = card.rank + card.suit;
+            cardDiv.appendChild(span);
+
+            return cardDiv;
+        }
+
+        function dealCards() {
+            cardsElement.innerHTML = "";
+
+            for (let i = 0; i < 6; i++) {
+                const card = getRandomCard();
+                const cardElement = createCardElement(card);
+                cardsElement.appendChild(cardElement);
+            }
+
+            statusElement.textContent =
+                "Карты на руках. Фарту.";
+
+            if (tg?.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred("light");
+            }
+        }
+
+        document.getElementById("dealButton").addEventListener("click", dealCards);
+
+        if (tg?.MainButton) {
+            tg.MainButton.setText("Погнали");
+            tg.MainButton.show();
+
+            tg.MainButton.onClick(() => {
+                dealCards();
+            });
+        }
+
+        renderBalance();
+        dealCards();
+    </script>
+</body>
+</html>
