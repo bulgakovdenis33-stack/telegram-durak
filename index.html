@@ -1,11 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Дурак: Подворотня</title>
 
-    <!-- Telegram Mini App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <style>
@@ -18,7 +17,9 @@
 
         body {
             font-family: 'Courier New', Courier, monospace;
-            background: radial-gradient(circle at top, #26221d, #0f0d0a);
+            background:
+                radial-gradient(circle at 50% 15%, rgba(255, 236, 190, 0.07), transparent 60%),
+                radial-gradient(circle at top, #26221d, #0f0d0a);
             color: #d1c7b0;
             min-height: 100vh;
             display: flex;
@@ -59,7 +60,7 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             color: #e0d6c0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
         }
 
         .subtitle {
@@ -67,70 +68,108 @@
             font-size: 14px;
             margin-bottom: 20px;
             text-transform: uppercase;
+            letter-spacing: 3px;
         }
 
         .cards {
-            min-height: 130px;
+            min-height: 160px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 12px;
+            align-items: center;
+            gap: 10px;
             margin: 24px 0;
         }
 
-        /* === ОБНОВЛЕННЫЙ СТИЛЬ КАРТ === */
+        /* ========== СТАРАЯ КАРТА ========== */
         .card {
-            width: 74px;
-            height: 106px;
-            border-radius: 2px;
-            border: 1px solid #a89d82;
-            color: #222;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            font-weight: 900;
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
             position: relative;
+            width: 84px;
+            height: 120px;
+            border-radius: 10px;
+            border: 1px solid rgba(110, 85, 55, 0.6);
+            box-shadow:
+                0 6px 14px rgba(0, 0, 0, 0.55),
+                inset 0 0 14px rgba(96, 66, 32, 0.35),
+                inset 0 0 2px rgba(70, 45, 20, 0.5);
             overflow: hidden;
-            /* Многослойный фон для эффекта старения */
-            background-image: 
-                /* Залом 1: диагональная складка */
-                linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.4) 42%, rgba(0,0,0,0.1) 44%, transparent 46%),
-                /* Залом 2: другая диагональ */
-                linear-gradient(45deg, transparent 60%, rgba(0,0,0,0.15) 62%, rgba(255,255,255,0.3) 64%, transparent 66%),
-                /* Пятна грязи и потертости */
-                radial-gradient(circle at 20% 80%, rgba(0,0,0,0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.25) 0%, transparent 50%),
-                /* Базовый цвет старой бумаги */
-                linear-gradient(to bottom, #e6dcc3, #cfc2a3);
+            font-family: Georgia, 'Times New Roman', serif;
         }
 
-        /* Эффект загнутго угла */
+        /* Зерно старой бумаги */
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+            opacity: 0.28;
+            mix-blend-mode: multiply;
+            pointer-events: none;
+        }
+
+        /* Потёртые затемнённые края */
         .card::after {
             content: '';
             position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 0;
-            height: 0;
-            border-style: solid;
-            border-width: 0 0 12px 12px;
-            border-color: transparent transparent #b0a48a transparent;
-            box-shadow: -2px -2px 4px rgba(0,0,0,0.1);
-        }
-
-        /* Текст карты должен быть поверх эффектов */
-        .card span {
-            position: relative;
+            inset: 0;
             z-index: 2;
-            text-shadow: 1px 1px 0 rgba(255,255,255,0.3); /* Легкий рельеф */
+            background: radial-gradient(circle at 50% 50%, transparent 55%, rgba(88, 60, 28, 0.30) 100%);
+            pointer-events: none;
         }
 
-        .red {
-            color: #7a1f1f;
+        .card .corner,
+        .card .pip {
+            z-index: 1;
         }
 
+        .card .corner {
+            position: absolute;
+            line-height: 1;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .card .corner .rank {
+            font-size: 20px;
+            display: block;
+        }
+
+        .card .corner .suit {
+            font-size: 15px;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .card .corner.top {
+            top: 6px;
+            left: 7px;
+        }
+
+        .card .corner.bottom {
+            bottom: 6px;
+            right: 7px;
+            transform: rotate(180deg);
+        }
+
+        .card .pip {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 46px;
+        }
+
+        .card.red {
+            color: #8e2b22; /* выцветшая тёмно-красная краска */
+        }
+
+        .card.black {
+            color: #262019; /* старая чёрная типографская краска */
+        }
+
+        /* ========== КНОПКА И СТАТУС ========== */
         .button {
             width: 100%;
             max-width: 360px;
@@ -139,6 +178,7 @@
             padding: 16px;
             font-size: 16px;
             font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
             color: #e0d6c0;
             background: #3d362d;
             border: 1px solid #221e19;
@@ -156,9 +196,21 @@
         .status {
             margin-top: 16px;
             min-height: 24px;
-            color: #9db1d2;
+            color: #9a917d;
             font-size: 14px;
             text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Узкие экраны телефонов */
+        @media (max-width: 430px) {
+            .card {
+                width: 56px;
+                height: 82px;
+            }
+            .card .pip { font-size: 30px; }
+            .card .corner .rank { font-size: 14px; }
+            .card .corner .suit { font-size: 11px; }
         }
     </style>
 </head>
@@ -176,9 +228,7 @@
 
         <button class="button" id="dealButton">Тасуй</button>
 
-        <div class="status" id="status">
-            Карты на руках. Фарту.
-        </div>
+        <div class="status" id="status">Карты на руках. Фарту.</div>
     </div>
 
     <script>
@@ -187,17 +237,12 @@
         if (tg) {
             tg.ready();
             tg.expand();
-
-            if (tg.disableVerticalSwipes) {
-                tg.disableVerticalSwipes();
-            }
+            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
         }
 
         const user = tg?.initDataUnsafe?.user;
-
         if (user && user.first_name) {
-            document.getElementById("player").textContent =
-                "Игрок: " + user.first_name;
+            document.getElementById("player").textContent = "Игрок: " + user.first_name;
         }
 
         let balance = 100;
@@ -212,45 +257,76 @@
 
         const suits = ["♠", "♥", "♦", "♣"];
         const ranks = ["6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+        const suitColor = { "♥": "red", "♦": "red", "♠": "black", "♣": "black" };
+
+        function rand(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        /* Генератор старины: у каждой карты свои пятна */
+        function wearBackground() {
+            const layers = [];
+
+            // Размытые пятна влаги
+            const spots = 5 + Math.floor(Math.random() * 4);
+            for (let i = 0; i < spots; i++) {
+                const x = rand(5, 95).toFixed(1);
+                const y = rand(5, 95).toFixed(1);
+                const r = rand(5, 18).toFixed(1);
+                const a = rand(0.06, 0.26).toFixed(2);
+                layers.push(`radial-gradient(circle at ${x}% ${y}%, rgba(112,74,34,${a}) 0%, rgba(112,74,34,0) ${r}%)`);
+            }
+
+            // Тёмные ржавые точки
+            for (let i = 0; i < 3; i++) {
+                const x = rand(8, 92).toFixed(1);
+                const y = rand(8, 92).toFixed(1);
+                const r = rand(1.5, 4).toFixed(1);
+                layers.push(`radial-gradient(circle at ${x}% ${y}%, rgba(84,48,16,0.5) 0%, rgba(84,48,16,0) ${r}%)`);
+            }
+
+            // Основа: пожелтевшая бумага
+            layers.push("linear-gradient(160deg, #ece0c2 0%, #e2d3ae 50%, #d2bf95 100%)");
+
+            return layers.join(",");
+        }
+
+        function createCardElement(card) {
+            const el = document.createElement("div");
+            el.className = "card " + suitColor[card.suit];
+            el.style.background = wearBackground();
+            el.style.transform = `rotate(${rand(-3.5, 3.5).toFixed(1)}deg)`;
+
+            el.innerHTML = `
+                <div class="corner top">
+                    <span class="rank">${card.rank}</span>
+                    <span class="suit">${card.suit}</span>
+                </div>
+                <div class="pip">${card.suit}</div>
+                <div class="corner bottom">
+                    <span class="rank">${card.rank}</span>
+                    <span class="suit">${card.suit}</span>
+                </div>
+            `;
+            return el;
+        }
 
         function getRandomCard() {
             const suit = suits[Math.floor(Math.random() * suits.length)];
             const rank = ranks[Math.floor(Math.random() * ranks.length)];
-
             return { suit, rank };
-        }
-
-        function createCardElement(card) {
-            const cardDiv = document.createElement("div");
-            cardDiv.className = "card";
-
-            if (card.suit === "♥" || card.suit === "♦") {
-                cardDiv.classList.add("red");
-            }
-
-            // Оборачиваем текст в span, чтобы он был поверх заломов
-            const span = document.createElement("span");
-            span.textContent = card.rank + card.suit;
-            cardDiv.appendChild(span);
-
-            return cardDiv;
         }
 
         function dealCards() {
             cardsElement.innerHTML = "";
 
             for (let i = 0; i < 6; i++) {
-                const card = getRandomCard();
-                const cardElement = createCardElement(card);
-                cardsElement.appendChild(cardElement);
+                cardsElement.appendChild(createCardElement(getRandomCard()));
             }
 
-            statusElement.textContent =
-                "Карты на руках. Фарту.";
+            statusElement.textContent = "Карты на руках. Фарту.";
 
-            if (tg?.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred("light");
-            }
+            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
         }
 
         document.getElementById("dealButton").addEventListener("click", dealCards);
@@ -258,10 +334,7 @@
         if (tg?.MainButton) {
             tg.MainButton.setText("Погнали");
             tg.MainButton.show();
-
-            tg.MainButton.onClick(() => {
-                dealCards();
-            });
+            tg.MainButton.onClick(() => dealCards());
         }
 
         renderBalance();
