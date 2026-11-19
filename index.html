@@ -320,4 +320,328 @@
                 layers.push(`radial-gradient(circle at ${x}% ${y}%, rgba(84,48,16,0.5) 0%, rgba(84,48,16,0) ${r}%)`);
             }
             layers.push("linear-gradient(160deg, #ece0c2 0%, #e2d3ae 50%, #d2bf95 100%)");
-            return layers.join(",
+            return layers.join(",");
+        }
+
+        function makeCardEl(card, cls) {
+            const d = document.createElement("div");
+            d.className = "card " + SUIT_COLOR[card.suit] + (cls ? " " + cls : "");
+            d.style.background = wearBackground();
+            d.style.transform = "rotate(" + rand(-3, 3).toFixed(1) + "deg)";
+            d.innerHTML = `
+                <div class="corner top"><span class="rank">${card.rank}</span><span class="suit">${card.suit}</span></div>
+                <div class="pip">${card.suit}</div>
+                <div class="corner bottom"><span class="rank">${card.rank}</span><span class="suit">${card.suit}</span></div>`;
+            return d;
+        }
+
+        function makeBackEl() {
+            const d = document.createElement("div");
+            d.className = "card back small";
+            d.style.transform = "rotate(" + rand(-4, 4).toFixed(1) + "deg)";
+            return d;
+        }
+
+        /* ========== КОЛОДА ========== */
+        function newDeck() {
+            deck = [];
+            for (const s of SUITS) for (const r of RANKS) deck.push({ rank: r, suit: s, value: VAL[r] });
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            trumpCard = deck[0];
+            trump = trumpCard.suit;
+        }
+
+        function drawCard() {
+            if (!deck.length) return null;
+            return deck.length === 1 ? deck.shift() : deck.pop();
+        }
+
+        function refill() {
+            const first = attacker === "player" ? playerHand : botHand;
+            const second = attacker === "player" ? botHand : playerHand;
+            while (first.length < 6) { const c = drawCard(); if (!c) break; first.push(c); }
+            while (second.length < 6) { const c = drawCard(); if (!c) break; second.push(c); }
+        }
+
+        /* ========== ПРАВИЛА ========== */
+        function beats(a, b) {
+            return (a.suit === b.suit && a.value > b.value) || (a.suit === trump && b.suit !== trump);
+        }
+
+        function undefendedPair() { return table.find(p => !p.defend) || null; }
+
+        function rankOnTable(card) {
+            return table.some(p => p.attack.rank === card.rank || (p.defend && p.defend.rank === card.rank));
+        }
+
+        function cardCost(c) { return (c.suit === trump ? 100 : 0) + c.value; }
+
+        /* ========== СТАРТ ========== */
+        function startGame() {
+            newDeck();
+            playerHand = []; botHand = []; table = []; discardCount = 0;
+            gameOver = false; busy = false;
+            refill();
+
+            const pT = Math.min(99, ...playerHand.filter(c => c.suit === trump).map(c => c.value));
+            const bT = Math.min(99, ...botHand.filter(c => c.suit === trump).map(c => c.value));
+            attacker = bT < pT ? "bot" : "player";
+
+            el("overlay").classList.add("hidden");
+            setStatus(attacker === "player" ? "Твой ход. Ходи." : "Соперник ходит. Отбивайся.");
+            render();
+
+            if (attacker === "bot") { busy = true; setTimeout(botAttack, 900); }
+        }
+
+        /* ========== ХОД ИГРОКА ========== */
+        function onPlayerCard(idx) {
+            if (busy || gameOver) return;
+            const card = playerHand[idx];
+            if (!card) return;
+
+            if (attacker === "player") {
+                const can = table.length === 0
+                    ? true
+                    : (rankOnTable(card) && table.length < 6 && botHand.length > 0);
+                if (!can) {
+                    setStatus("Эту карту подкинуть нельзя.");
+                    haptic("error");
+                    return;
+                }
+                playerHand.splice(idx, 1);
+                table.push({ attack: card, defend: null });
+                haptic("medium");
+                busy = true;
+                setStatus("Соперник думает...");
+                render();
+                setTimeout(botDefend, 800);
+            } else {
+                const p = undefendedPair();
+                if (!p) { setStatus("Пока нечего отбивать."); return; }
+                if (!beats(card, p.attack)) {
+                    setStatus("Не бьёт эту карту.");
+                    haptic("error");
+                    return;
+                }
+                playerHand.splice(idx, 1);
+                p.defend = card;
+                haptic("medium");
+                render();
+                if (!undefendedPair()) {
+                    busy = true;
+                    setStatus("Соперник думает...");
+                    setTimeout(botAttack, 900);
+                }
+            }
+        }
+
+        /* ========== БОТ ========== */
+        function botDefend() {
+            const p = undefendedPair();
+            if (!p) { busy = false; render(); return; }
+
+            const options = botHand.filter(c => beats(c, p.attack)).sort((a, b) => cardCost(a) - cardCost(b));
+
+            if (options.length) {
+                const c = options[0];
+                botHand.splice(botHand.indexOf(c), 1);
+                p.defend = c;
+                busy = false;
+                setStatus("Отбился. Подкидывай или жми «Отбой».");
+                render();
+            } else {
+                for (const pair of table) {
+                    botHand.push(pair.attack);
+                    if (pair.defend) botHand.push(pair.defend);
+                }
+                table = [];
+                haptic("success");
+                setStatus("Соперник забирает. Фарту.");
+                endBout("bot");
+            }
+        }
+
+        function botAttack() {
+            if (gameOver) return;
+
+            let choice = null;
+            const pool = botHand.slice().sort((a, b) => cardCost(a) - cardCost(b));
+
+            if (table.length === 0) {
+                choice = pool[0] || null;
+            } else {
+                const matching = pool.filter(c => rankOnTable(c));
+                if (matching.length && matching[0].value <= 10) choice = matching[0];
+            }
+
+            const canPlace = choice && table.length < 6 && playerHand.length > 0;
+
+            if (canPlace) {
+                botHand.splice(botHand.indexOf(choice), 1);
+                table.push({ attack: choice, defend: null });
+                busy = false;
+                setStatus(table.length === 1 ? "Соперник ходит. Отбивайся." : "Подкидывает. Отбивайся.");
+                render();
+            } else {
+                setStatus("Отбой.");
+                endBout(null);
+            }
+        }
+
+        /* ========== КОНЕЦ РАУНДА ========== */
+        function endBout(taker) {
+            const cards = [];
+            for (const p of table) {
+                cards.push(p.attack);
+                if (p.defend) cards.push(p.defend);
+            }
+            table = [];
+
+            if (taker) {
+                (taker === "player" ? playerHand : botHand).push(...cards);
+            } else {
+                discardCount += cards.length;
+                attacker = attacker === "player" ? "bot" : "player";
+            }
+
+            refill();
+            busy = false;
+
+            const pEmpty = playerHand.length === 0;
+            const bEmpty = botHand.length === 0;
+
+            if (deck.length === 0 && (pEmpty || bEmpty)) {
+                gameOver = true;
+                if (pEmpty && bEmpty) finish("draw");
+                else if (pEmpty) finish("win");
+                else finish("loss");
+                return;
+            }
+
+            render();
+
+            if (attacker === "player") {
+                setStatus("Твой ход. Ходи.");
+            } else {
+                busy = true;
+                setStatus("Соперник ходит. Отбивайся.");
+                render();
+                setTimeout(botAttack, 900);
+            }
+        }
+
+        function finish(result) {
+            gameOver = true;
+            busy = false;
+
+            let title, delta = 0;
+            if (result === "win") { title = "Фартануло. Ты не дурак."; delta = 10; haptic("success"); }
+            else if (result === "loss") { title = "Ты дурак. Бывает."; delta = -5; haptic("error"); }
+            else { title = "Ничья. Раздали поровну."; }
+
+            fart = Math.max(0, fart + delta);
+            localStorage.setItem("durak_fart", String(fart));
+            renderBalance();
+
+            el("overlayTitle").textContent = title;
+            el("overlayText").textContent = delta > 0 ? ("+" + delta + " к фарту") : (delta < 0 ? (delta + " к фарту") : "Фарт не изменился");
+            el("overlay").classList.remove("hidden");
+            render();
+        }
+
+        /* ========== КНОПКИ ========== */
+        el("btnBito").addEventListener("click", () => {
+            if (busy || gameOver) return;
+            if (attacker === "player" && table.length > 0 && !undefendedPair()) {
+                setStatus("Отбой.");
+                endBout(null);
+            }
+        });
+
+        el("btnTake").addEventListener("click", () => {
+            if (busy || gameOver) return;
+            if (attacker === "bot" && table.length > 0) {
+                for (const p of table) {
+                    playerHand.push(p.attack);
+                    if (p.defend) playerHand.push(p.defend);
+                }
+                table = [];
+                haptic("error");
+                setStatus("Твоя взяла... в карты.");
+                endBout("player");
+            }
+        });
+
+        el("btnAgain").addEventListener("click", startGame);
+
+        /* ========== ОТРИСОВКА ========== */
+        function render() {
+            renderBalance();
+
+            const botRow = el("botRow");
+            botRow.innerHTML = "";
+            const showBacks = Math.min(botHand.length, 8);
+            for (let i = 0; i < showBacks; i++) botRow.appendChild(makeBackEl());
+            const botLabel = document.createElement("div");
+            botLabel.className = "deckLabel";
+            botLabel.textContent = "Соперник: " + botHand.length;
+            botRow.appendChild(botLabel);
+
+            const deckRow = el("deckRow");
+            deckRow.innerHTML = "";
+            const deckLabel = document.createElement("div");
+            deckLabel.className = "deckLabel";
+            deckLabel.textContent = "Колода: " + deck.length;
+            deckRow.appendChild(deckLabel);
+
+            if (deck.length > 0) {
+                const slot = document.createElement("div");
+                slot.className = "trumpSlot";
+                slot.appendChild(makeCardEl(trumpCard, "small"));
+                deckRow.appendChild(slot);
+            } else {
+                const t = document.createElement("div");
+                t.className = "deckLabel";
+                t.textContent = "Козырь: " + trump;
+                deckRow.appendChild(t);
+            }
+
+            const tableZone = el("tableZone");
+            tableZone.innerHTML = "";
+            for (const p of table) {
+                const pair = document.createElement("div");
+                pair.className = "pair";
+                const atk = makeCardEl(p.attack);
+                atk.classList.add("atk");
+                pair.appendChild(atk);
+                if (p.defend) {
+                    const def = makeCardEl(p.defend);
+                    def.classList.add("def");
+                    pair.appendChild(def);
+                }
+                tableZone.appendChild(pair);
+            }
+
+            const handRow = el("handRow");
+            handRow.innerHTML = "";
+            handRow.classList.toggle("locked", busy || gameOver || attacker === "bot" && !undefendedPair() === false ? busy || gameOver : busy || gameOver);
+            playerHand.forEach((card, i) => {
+                const c = makeCardEl(card);
+                c.addEventListener("click", () => onPlayerCard(i));
+                handRow.appendChild(c);
+            });
+
+            el("btnBito").style.display =
+                (!busy && !gameOver && attacker === "player" && table.length > 0 && !undefendedPair()) ? "" : "none";
+            el("btnTake").style.display =
+                (!busy && !gameOver && attacker === "bot" && table.length > 0) ? "" : "none";
+        }
+
+        startGame();
+    </script>
+</body>
+</html>
