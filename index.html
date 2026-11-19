@@ -8,12 +8,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
 
         body {
             font-family: 'Courier New', Courier, monospace;
@@ -33,30 +28,24 @@
             display: flex;
             justify-content: space-between;
             gap: 10px;
-            padding: 18px 16px 8px;
+            padding: 14px 16px 4px;
         }
 
         .badge {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px 14px;
+            padding: 8px 12px;
             border-radius: 2px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
-        .main {
-            width: 100%;
-            max-width: 700px;
-            padding: 16px;
-            text-align: center;
-        }
+        .main { width: 100%; max-width: 700px; padding: 4px 10px; text-align: center; }
 
         h1 {
-            font-size: 32px;
-            margin-bottom: 6px;
+            font-size: 26px;
             text-transform: uppercase;
             letter-spacing: 2px;
             color: #e0d6c0;
@@ -65,27 +54,26 @@
 
         .subtitle {
             color: #8a8172;
-            font-size: 14px;
-            margin-bottom: 20px;
+            font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 3px;
+            margin-bottom: 8px;
         }
 
-        .cards {
-            min-height: 160px;
+        .row {
             display: flex;
-            flex-wrap: wrap;
             justify-content: center;
             align-items: center;
-            gap: 10px;
-            margin: 24px 0;
+            gap: 8px;
+            flex-wrap: wrap;
+            min-height: 34px;
         }
 
-        /* ========== СТАРАЯ КАРТА ========== */
+        /* ========== КАРТА ========== */
         .card {
             position: relative;
-            width: 84px;
-            height: 120px;
+            width: 74px;
+            height: 106px;
             border-radius: 10px;
             border: 1px solid rgba(110, 85, 55, 0.6);
             box-shadow:
@@ -94,9 +82,9 @@
                 inset 0 0 2px rgba(70, 45, 20, 0.5);
             overflow: hidden;
             font-family: Georgia, 'Times New Roman', serif;
+            flex: none;
         }
 
-        /* Зерно старой бумаги */
         .card::before {
             content: '';
             position: absolute;
@@ -108,7 +96,6 @@
             pointer-events: none;
         }
 
-        /* Потёртые затемнённые края */
         .card::after {
             content: '';
             position: absolute;
@@ -118,39 +105,13 @@
             pointer-events: none;
         }
 
-        .card .corner,
-        .card .pip {
-            z-index: 1;
-        }
+        .card .corner, .card .pip { z-index: 1; }
 
-        .card .corner {
-            position: absolute;
-            line-height: 1;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .card .corner .rank {
-            font-size: 20px;
-            display: block;
-        }
-
-        .card .corner .suit {
-            font-size: 15px;
-            display: block;
-            margin-top: 2px;
-        }
-
-        .card .corner.top {
-            top: 6px;
-            left: 7px;
-        }
-
-        .card .corner.bottom {
-            bottom: 6px;
-            right: 7px;
-            transform: rotate(180deg);
-        }
+        .card .corner { position: absolute; line-height: 1; text-align: center; font-weight: bold; }
+        .card .corner .rank { font-size: 18px; display: block; }
+        .card .corner .suit { font-size: 13px; display: block; margin-top: 2px; }
+        .card .corner.top { top: 5px; left: 6px; }
+        .card .corner.bottom { bottom: 5px; right: 6px; transform: rotate(180deg); }
 
         .card .pip {
             position: absolute;
@@ -158,25 +119,47 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 46px;
+            font-size: 40px;
         }
 
-        .card.red {
-            color: #8e2b22; /* выцветшая тёмно-красная краска */
+        .card.red { color: #8e2b22; }
+        .card.black { color: #262019; }
+
+        /* Рубашка карты */
+        .card.back {
+            background:
+                repeating-linear-gradient(45deg, #5a2f22 0 5px, #45231a 5px 10px);
+            border-color: rgba(60, 40, 28, 0.9);
         }
 
-        .card.black {
-            color: #262019; /* старая чёрная типографская краска */
-        }
+        .card.small { width: 42px; height: 60px; border-radius: 6px; }
 
-        /* ========== КНОПКА И СТАТУС ========== */
+        /* ========== СТОЛ ========== */
+        .tableZone { min-height: 140px; margin: 6px 0; }
+
+        .pair { position: relative; width: 92px; height: 124px; }
+        .pair .card { position: absolute; }
+        .pair .atk { top: 0; left: 0; }
+        .pair .def { top: 18px; left: 18px; }
+
+        .trumpSlot { transform: rotate(90deg); margin: 0 34px; }
+
+        .deckLabel { font-size: 13px; color: #9a917d; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* ========== РУКА ИГРОКА ========== */
+        .hand { min-height: 116px; margin-top: 4px; }
+        .hand .card { cursor: pointer; }
+        .hand .card:active { filter: brightness(1.2); }
+        .hand.locked .card { cursor: default; opacity: 0.85; }
+
+        /* ========== КНОПКИ ========== */
+        .actions { display: flex; justify-content: center; gap: 10px; margin: 10px 0; }
+
         .button {
-            width: 100%;
-            max-width: 360px;
             border: none;
             border-radius: 2px;
-            padding: 16px;
-            font-size: 16px;
+            padding: 14px 22px;
+            font-size: 15px;
             font-weight: bold;
             font-family: 'Courier New', Courier, monospace;
             color: #e0d6c0;
@@ -188,29 +171,58 @@
             box-shadow: 0 4px 0 #1a1612;
         }
 
-        .button:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #1a1612;
-        }
+        .button:active { transform: translateY(2px); box-shadow: 0 2px 0 #1a1612; }
 
         .status {
-            margin-top: 16px;
-            min-height: 24px;
+            min-height: 22px;
             color: #9a917d;
-            font-size: 14px;
+            font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            margin-bottom: 10px;
         }
 
-        /* Узкие экраны телефонов */
+        /* ========== ЭКРАН ИТОГА ========== */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(5, 4, 3, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .overlay.hidden { display: none; }
+
+        .overlay .box {
+            text-align: center;
+            background: #1d1a16;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            padding: 28px 26px;
+            max-width: 320px;
+        }
+
+        .overlay h2 {
+            font-size: 22px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #e0d6c0;
+            margin-bottom: 10px;
+        }
+
+        .overlay p { color: #9a917d; font-size: 14px; margin-bottom: 18px; }
+
         @media (max-width: 430px) {
-            .card {
-                width: 56px;
-                height: 82px;
-            }
-            .card .pip { font-size: 30px; }
-            .card .corner .rank { font-size: 14px; }
-            .card .corner .suit { font-size: 11px; }
+            .card { width: 52px; height: 76px; }
+            .card .pip { font-size: 28px; }
+            .card .corner .rank { font-size: 13px; }
+            .card .corner .suit { font-size: 10px; }
+            .card.small { width: 32px; height: 46px; }
+            .pair { width: 66px; height: 92px; }
+            .pair .def { top: 12px; left: 12px; }
+            .trumpSlot { margin: 0 24px; }
         }
     </style>
 </head>
@@ -224,16 +236,32 @@
         <h1>Дурак</h1>
         <div class="subtitle">Подворотня</div>
 
-        <div class="cards" id="cards"></div>
+        <div class="row" id="botRow"></div>
 
-        <button class="button" id="dealButton">Тасуй</button>
+        <div class="row" id="deckRow"></div>
 
-        <div class="status" id="status">Карты на руках. Фарту.</div>
+        <div class="row tableZone" id="tableZone"></div>
+
+        <div class="actions">
+            <button class="button" id="btnBito" style="display:none">Отбой</button>
+            <button class="button" id="btnTake" style="display:none">Забрать</button>
+        </div>
+
+        <div class="status" id="status">...</div>
+
+        <div class="row hand" id="handRow"></div>
+    </div>
+
+    <div class="overlay hidden" id="overlay">
+        <div class="box">
+            <h2 id="overlayTitle">Итог</h2>
+            <p id="overlayText"></p>
+            <button class="button" id="btnAgain">Сыграть ещё</button>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram?.WebApp;
-
         if (tg) {
             tg.ready();
             tg.expand();
@@ -245,100 +273,51 @@
             document.getElementById("player").textContent = "Игрок: " + user.first_name;
         }
 
-        let balance = 100;
+        let fart = parseInt(localStorage.getItem("durak_fart") || "100", 10);
 
-        const balanceElement = document.getElementById("balance");
-        const cardsElement = document.getElementById("cards");
-        const statusElement = document.getElementById("status");
+        const SUITS = ["♠", "♥", "♦", "♣"];
+        const RANKS = ["6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+        const VAL = { "6":6, "7":7, "8":8, "9":9, "10":10, "J":11, "Q":12, "K":13, "A":14 };
+        const SUIT_COLOR = { "♥": "red", "♦": "red", "♠": "black", "♣": "black" };
 
-        function renderBalance() {
-            balanceElement.textContent = "Фарт: " + balance;
+        let deck = [], trump = null, trumpCard = null;
+        let playerHand = [], botHand = [];
+        let table = [];
+        let discardCount = 0;
+        let attacker = "player";
+        let busy = false;
+        let gameOver = false;
+
+        const el = (id) => document.getElementById(id);
+
+        function haptic(kind) {
+            if (!tg || !tg.HapticFeedback) return;
+            try {
+                if (kind === "success") tg.HapticFeedback.notificationOccurred("success");
+                else if (kind === "error") tg.HapticFeedback.notificationOccurred("error");
+                else tg.HapticFeedback.impactOccurred(kind || "medium");
+            } catch (e) {}
         }
 
-        const suits = ["♠", "♥", "♦", "♣"];
-        const ranks = ["6", "7", "8", "9", "10", "J", "Q", "K", "A"];
-        const suitColor = { "♥": "red", "♦": "red", "♠": "black", "♣": "black" };
+        function rand(min, max) { return Math.random() * (max - min) + min; }
 
-        function rand(min, max) {
-            return Math.random() * (max - min) + min;
-        }
+        function setStatus(text) { el("status").textContent = text; }
 
-        /* Генератор старины: у каждой карты свои пятна */
+        function renderBalance() { el("balance").textContent = "Фарт: " + fart; }
+
+        /* ========== СТАРАЯ БУМАГА ========== */
         function wearBackground() {
             const layers = [];
-
-            // Размытые пятна влаги
             const spots = 5 + Math.floor(Math.random() * 4);
             for (let i = 0; i < spots; i++) {
-                const x = rand(5, 95).toFixed(1);
-                const y = rand(5, 95).toFixed(1);
-                const r = rand(5, 18).toFixed(1);
-                const a = rand(0.06, 0.26).toFixed(2);
+                const x = rand(5, 95).toFixed(1), y = rand(5, 95).toFixed(1);
+                const r = rand(5, 18).toFixed(1), a = rand(0.06, 0.26).toFixed(2);
                 layers.push(`radial-gradient(circle at ${x}% ${y}%, rgba(112,74,34,${a}) 0%, rgba(112,74,34,0) ${r}%)`);
             }
-
-            // Тёмные ржавые точки
             for (let i = 0; i < 3; i++) {
-                const x = rand(8, 92).toFixed(1);
-                const y = rand(8, 92).toFixed(1);
+                const x = rand(8, 92).toFixed(1), y = rand(8, 92).toFixed(1);
                 const r = rand(1.5, 4).toFixed(1);
                 layers.push(`radial-gradient(circle at ${x}% ${y}%, rgba(84,48,16,0.5) 0%, rgba(84,48,16,0) ${r}%)`);
             }
-
-            // Основа: пожелтевшая бумага
             layers.push("linear-gradient(160deg, #ece0c2 0%, #e2d3ae 50%, #d2bf95 100%)");
-
-            return layers.join(",");
-        }
-
-        function createCardElement(card) {
-            const el = document.createElement("div");
-            el.className = "card " + suitColor[card.suit];
-            el.style.background = wearBackground();
-            el.style.transform = `rotate(${rand(-3.5, 3.5).toFixed(1)}deg)`;
-
-            el.innerHTML = `
-                <div class="corner top">
-                    <span class="rank">${card.rank}</span>
-                    <span class="suit">${card.suit}</span>
-                </div>
-                <div class="pip">${card.suit}</div>
-                <div class="corner bottom">
-                    <span class="rank">${card.rank}</span>
-                    <span class="suit">${card.suit}</span>
-                </div>
-            `;
-            return el;
-        }
-
-        function getRandomCard() {
-            const suit = suits[Math.floor(Math.random() * suits.length)];
-            const rank = ranks[Math.floor(Math.random() * ranks.length)];
-            return { suit, rank };
-        }
-
-        function dealCards() {
-            cardsElement.innerHTML = "";
-
-            for (let i = 0; i < 6; i++) {
-                cardsElement.appendChild(createCardElement(getRandomCard()));
-            }
-
-            statusElement.textContent = "Карты на руках. Фарту.";
-
-            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
-        }
-
-        document.getElementById("dealButton").addEventListener("click", dealCards);
-
-        if (tg?.MainButton) {
-            tg.MainButton.setText("Погнали");
-            tg.MainButton.show();
-            tg.MainButton.onClick(() => dealCards());
-        }
-
-        renderBalance();
-        dealCards();
-    </script>
-</body>
-</html>
+            return layers.join(",
